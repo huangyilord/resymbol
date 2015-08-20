@@ -1,5 +1,7 @@
 # resymbol
-Rename a symbol in static library or object file.
+Are you suffering duplicated symbols when trying to import some 3rd party libraries? Try this tool to rename them.
+
+This tool is only to rename a symbol in static library or object file ON IOS AND OSX.
 
 Here are the steps you should follow to rename a symbol in a static library.
 	1. Put the original .a file in the origin folder

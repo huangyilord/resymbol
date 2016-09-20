@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import <mach-o/loader.h>
+#import "ConfigParser.h"
 
 typedef struct macho_header
 {
@@ -80,13 +81,19 @@ typedef struct macho_section
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        if ( argc < 4 )
+        if ( argc < 3 )
         {
+            printf( "usage: [elf file name] [resymbol map file name]\n");
             return -1;
         }
         NSString* elfFileName = [NSString stringWithUTF8String:argv[1]];
-        NSString* fromSymbol = [NSString stringWithUTF8String:argv[2]];
-        NSString* toSymbol = [NSString stringWithUTF8String:argv[3]];
+        NSString* mapFile = [NSString stringWithUTF8String:argv[2]];
+        ConfigParser* parser = [[ConfigParser alloc] init];
+        if ( ![parser loadFile:mapFile] )
+        {
+            printf( "unable to load file %s\n", [mapFile UTF8String] );
+            return -1;
+        }
 
         NSUInteger offset = 0;
         struct macho_header header = { 0 };
@@ -116,11 +123,13 @@ int main(int argc, const char * argv[]) {
                 while ( offset < symtabcommand.strsize )
                 {
                     char* str = stringData + offset;
+                    NSString* symbol = [NSString stringWithUTF8String:str];
+                    NSString* resymbol = [parser.symbolMap objectForKey:symbol];
                     size_t len = strlen(str);
-                    if ( len > 0 && memcmp( [fromSymbol UTF8String], str, len ) == 0 )
+                    if ( resymbol )
                     {
                         bReplace = YES;
-                        memcpy( str, [toSymbol UTF8String], len );
+                        memcpy( str, [resymbol UTF8String], len );
                     }
                     offset += len + 1;
                 }
